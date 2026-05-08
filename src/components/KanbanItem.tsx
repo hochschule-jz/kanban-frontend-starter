@@ -26,19 +26,32 @@ interface KanbanItemProps {
 }
 
 function KanbanItem({ item, onSave, onCancel }: KanbanItemProps) {
-  const [itemData, setItemData] = useState<ItemData>({
-    title: '',
-    description: '',
-    type: 'User Story', // Default value
-    estimate: 1, // Default value
-    state: 'Open', // Default value
-    assigned_user: '',
-    priority: 'Low', // Default value
+  const [itemData, setItemData] = useState<ItemData>(() => {
+    if (item) {
+      return {
+        title: item.title,
+        description: item.description,
+        type: item.type,
+        estimate: item.estimate,
+        state: item.state,
+        assigned_user: item.assigned_user,
+        priority: item.priority,
+      };
+    }
+    return {
+      title: '',
+      description: '',
+      type: 'User Story',
+      estimate: 1,
+      state: 'Open',
+      assigned_user: '',
+      priority: 'Low',
+    };
   });
 
   useEffect(() => {
     if (item) {
-      // Populate form fields if item prop is provided (editing)
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setItemData({
         title: item.title,
         description: item.description,
@@ -49,7 +62,6 @@ function KanbanItem({ item, onSave, onCancel }: KanbanItemProps) {
         priority: item.priority,
       });
     } else {
-      // Clear form fields if no item prop (creating new)
       setItemData({
         title: '',
         description: '',
@@ -135,9 +147,9 @@ function KanbanItem({ item, onSave, onCancel }: KanbanItemProps) {
       toast.success(`Item ${item ? 'updated' : 'created'} successfully!`);
       onSave(); // Notify parent component to refresh/close form
 
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('Error saving item:', error);
-      toast.error(`Failed to save item: ${error.message}`);
+      toast.error(`Failed to save item: ${(error as Error).message}`);
     }
   };
 
