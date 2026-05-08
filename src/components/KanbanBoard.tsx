@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import type { Item } from '../data/types';
 import { Toaster } from "@/components/ui/sonner";
 import { toast } from "sonner";
@@ -11,7 +11,7 @@ function KanbanBoard() {
   const [showNewItemSheet, setShowNewItemSheet] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const fetchItems = async () => {
+  const fetchItems = useCallback(async () => {
     try {
       const response = await fetch('https://hb-kanban-backend.hb-user.workers.dev/items');
       if (!response.ok) {
@@ -19,17 +19,20 @@ function KanbanBoard() {
       }
       const data: Item[] = await response.json();
       setItems(data);
-    } catch (err: any) {
-      setError(err.message);
+    } catch (err: unknown) {
+      setError((err as Error).message);
     } finally {
       setLoading(false);
       toast("The items have been loaded successfully");
     }
-  };
+  }, []);
 
   useEffect(() => {
-    fetchItems();
-  }, []);
+    const loadItems = async () => {
+      await fetchItems();
+    };
+    loadItems();
+  }, [fetchItems]);
 
   if (loading) {
     return <div>Loading...</div>;
@@ -123,9 +126,9 @@ function KanbanBoard() {
       toast.success(`Item ${itemId} moved to ${newState}`);
       fetchItems(); // Reload items to ensure consistency
 
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('Error updating item state:', error);
-      toast.error(`Failed to move item ${itemId}: ${error.message}`);
+      toast.error(`Failed to move item ${itemId}: ${(error as Error).message}`);
       // Revert state on error
       setItems(items.map(item =>
         item.id === parseInt(itemId, 10) ? { ...item, state: originalState } : item
